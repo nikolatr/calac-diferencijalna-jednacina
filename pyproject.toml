@@ -1,0 +1,13 @@
+[project]
+name = "diferencijalna-jednacina"
+version = "0.1.0"
+description = "Numericko resavanje diferencijalne jednacine masa-oprug-prigusivac sistema"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "ipykernel>=6.29.0",
+    "matplotlib>=3.8.0",
+    "numpy>=1.26.0",
+    "scipy>=1.11.0",
+    "jupyter>=1.0.0",
+]
