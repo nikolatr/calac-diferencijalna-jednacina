@@ -9,36 +9,14 @@ import matplotlib
 matplotlib.use('Agg')
 
 import numpy as np
-from scipy.integrate import odeint
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
 
-# === Konstante sistema ===
-M = 3.2e-2  # kg - masa
-c = 3e5     # N/m - konstanta opruge
-A = 5e-5    # m^2 - površina
-P = 40e5    # N/m^2 - pritisak
-u = 1       # koeficijent prigušenja
-
-
-def jednacina(y, t):
-    """Sistem diferencijalnih jednačina prvog reda."""
-    x, v = y
-    dydt = [v, (A * P * np.sin(2 * np.pi * t) - u * v - c * x) / M]
-    return dydt
-
-
-# === Parametri simulacije ===
-y0 = [0, 0]
-T_pocetak = 0
-T_kraj = 3
-f_odabiranja = 10000
-T_odabiranja = 1 / f_odabiranja
-t = np.arange(T_pocetak, T_kraj, T_odabiranja)
+from simulacija import A, P, t, resi
 
 # === Rešavanje jednačine ===
-rezultat = odeint(jednacina, y0, t)
+rezultat = resi()
 
 # === Parametri animacije ===
 SCALE = 1500
@@ -157,8 +135,7 @@ def create_animation():
     cursor, = ax_plot.plot([], [], 'r-', lw=0.8, alpha=0.6)
     ax_plot.legend(loc='upper right')
 
-    def update(frame):
-        i = frame
+    def update(i):
         xi = x_sub[i]
         fi = F_sub[i]
         ti = t_sub[i]
@@ -189,7 +166,10 @@ def create_animation():
 
         # Sila
         f_scale = fi / (A * P) * 2.0
-        arrow_end = mass_x + MASS_W + abs(f_scale) * np.sign(fi) if fi != 0 else mass_x + MASS_W + 0.01
+        if fi != 0:
+            arrow_end = mass_x + MASS_W + abs(f_scale) * np.sign(fi)
+        else:
+            arrow_end = mass_x + MASS_W + 0.01
         force_arrow.set_positions(
             (mass_x + MASS_W, 0),
             (arrow_end, 0)
