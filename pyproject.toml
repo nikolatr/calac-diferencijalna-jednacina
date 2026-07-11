@@ -1,8 +1,9 @@
 [project]
 name = "diferencijalna-jednacina"
 version = "0.1.0"
-description = "Numericko resavanje diferencijalne jednacine masa-oprug-prigusivac sistema"
+description = "Numeričko rešavanje diferencijalne jednačine sistema masa-opruga-prigušivač"
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.9"
 dependencies = [
     "matplotlib>=3.8.0",
