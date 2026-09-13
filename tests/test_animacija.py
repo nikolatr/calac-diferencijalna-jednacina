@@ -84,27 +84,33 @@ class KomandnaLinijaTest(unittest.TestCase):
         resi.assert_not_called()
 
     def test_preveliki_bafer_se_odbacuje_pre_simulacije(self) -> None:
-        with mock.patch("animacija.resi") as resi, self.assertRaisesRegex(
-            ValueError, "bafera"
+        with (
+            mock.patch("animacija.resi") as resi,
+            self.assertRaisesRegex(ValueError, "bafera"),
         ):
             animacija.create_animation("izlaz.gif", brzina=0.01)
         resi.assert_not_called()
 
     def test_ekstremno_mala_brzina_ne_alocira_ogroman_niz(self) -> None:
         for brzina in (1e-8, 5e-324):
-            with self.subTest(brzina=brzina), mock.patch(
-                "animacija.resi"
-            ) as resi, self.assertRaisesRegex(ValueError, "previše frejmova"):
+            with (
+                self.subTest(brzina=brzina),
+                mock.patch("animacija.resi") as resi,
+                self.assertRaisesRegex(ValueError, "previše frejmova"),
+            ):
                 animacija.create_animation("izlaz.gif", brzina=brzina)
             resi.assert_not_called()
 
     def test_import_ne_ucitava_pyplot(self) -> None:
         koren = Path(__file__).resolve().parents[1]
+        kod_provere = (
+            "import sys; import animacija; print('matplotlib.pyplot' in sys.modules)"
+        )
         provera = subprocess.run(
             [
                 sys.executable,
                 "-c",
-                "import sys; import animacija; print('matplotlib.pyplot' in sys.modules)",
+                kod_provere,
             ],
             cwd=koren,
             check=True,
@@ -134,9 +140,12 @@ class KomandnaLinijaTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as direktorijum:
             output = Path(direktorijum) / "rezultat.gif"
             otvorene_pre = set(plt.get_fignums())
-            with mock.patch(
-                "animacija.spring_xy", side_effect=RuntimeError("test greška")
-            ), self.assertRaisesRegex(RuntimeError, "test greška"):
+            with (
+                mock.patch(
+                    "animacija.spring_xy", side_effect=RuntimeError("test greška")
+                ),
+                self.assertRaisesRegex(RuntimeError, "test greška"),
+            ):
                 animacija.create_animation(output, fps=2, brzina=10, dpi=20)
 
             self.assertEqual(set(plt.get_fignums()), otvorene_pre)

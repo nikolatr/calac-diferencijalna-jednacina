@@ -22,7 +22,7 @@ prigušenja $\zeta$. Za zadate vrednosti važi $\zeta\approx0{,}0051$.
 
 ## Brzi početak
 
-Potreban je Python 3.9 ili noviji i [uv](https://docs.astral.sh/uv/).
+Potreban je Python 3.11 ili noviji i [uv](https://docs.astral.sh/uv/).
 
 ```bash
 uv sync --locked
@@ -69,10 +69,13 @@ frejmove odbijaju se uz jasnu poruku. Sve opcije su dostupne preko
 
 ```bash
 uv run --locked python -m unittest discover -s tests -v
+uv run --locked ruff check .
+uv run --locked ruff format --check .
 ```
 
 Testovi proveravaju fizički bilans, analitičku amplitudu ustaljenog odziva,
 validaciju ulaza, vremensku osu, geometriju i vremensko uzorkovanje animacije.
+Ruff proverava stil, sortiranje import-a i česte greške u Python kodu.
 
 ## Licenca
 

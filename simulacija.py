@@ -5,29 +5,28 @@ Modul sadrži fizičke parametre, pobudnu silu i rešavač koje dele
 ``T_pocetak <= t < T_kraj``.
 """
 
+from collections.abc import Sequence
 from dataclasses import dataclass, fields
 from math import isfinite, pi, sqrt
-from typing import Optional, Sequence, Union
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 from scipy.integrate import solve_ivp
 
-
 FloatArray = NDArray[np.float64]
-ScalarOrArray = Union[np.float64, FloatArray]
+ScalarOrArray = np.float64 | FloatArray
 
 
 @dataclass(frozen=True)
 class ParametriSistema:
     """Fizički parametri linearnog oscilatora sa harmonijskom pobudom."""
 
-    masa: float = 3.2e-2                 # kg
-    krutost_opruge: float = 3e5          # N/m
+    masa: float = 3.2e-2  # kg
+    krutost_opruge: float = 3e5  # N/m
     koeficijent_prigusenja: float = 1.0  # N s/m
-    povrsina: float = 5e-5               # m²
-    pritisak: float = 40e5               # N/m²
-    frekvencija_pobude: float = 1.0      # Hz
+    povrsina: float = 5e-5  # m²
+    pritisak: float = 40e5  # N/m²
+    frekvencija_pobude: float = 1.0  # Hz
 
     def __post_init__(self) -> None:
         for polje in fields(self):
@@ -125,11 +124,11 @@ def sila(
 
 
 def jednacina(
-    stanje: Sequence[float],
     vreme: float,
+    stanje: Sequence[float],
     parametri: ParametriSistema = PARAMETRI,
 ) -> FloatArray:
-    """Vraća ``[x', v']`` za trenutno stanje ``[x, v]``."""
+    """Vraća ``[x', v']`` u konvenciji ``solve_ivp``: ``f(t, y)``."""
     stanje_niz = np.asarray(stanje, dtype=float)
     if stanje_niz.shape != (2,):
         raise ValueError("stanje mora sadržati tačno pomeranje i brzinu")
@@ -143,17 +142,8 @@ def jednacina(
     return np.array([v, ubrzanje], dtype=float)
 
 
-def _jednacina_solve_ivp(
-    vreme: float,
-    stanje: Sequence[float],
-    parametri: ParametriSistema = PARAMETRI,
-) -> FloatArray:
-    """Adapter za ``solve_ivp``, koji očekuje argumente redom ``(t, y)``."""
-    return jednacina(stanje, vreme, parametri)
-
-
 def resi(
-    vreme: Optional[ArrayLike] = None,
+    vreme: ArrayLike | None = None,
     pocetno_stanje: ArrayLike = y0,
     parametri: ParametriSistema = PARAMETRI,
 ) -> FloatArray:
@@ -186,7 +176,7 @@ def resi(
         raise ValueError("pocetno_stanje mora sadržati samo konačne vrednosti")
 
     resenje = solve_ivp(
-        _jednacina_solve_ivp,
+        jednacina,
         t_span=(float(vreme_niz[0]), float(vreme_niz[-1])),
         y0=stanje_niz,
         t_eval=vreme_niz,

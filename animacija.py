@@ -7,15 +7,15 @@ Primer::
 
 import argparse
 import secrets
+from collections.abc import Callable, Sequence
+from contextlib import suppress
 from math import ceil, isfinite
 from pathlib import Path
-from typing import Callable, Optional, Sequence, Union
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
 from simulacija import PARAMETRI, resi, sila, t
-
 
 SCALE = 1500
 FPS = 25
@@ -107,7 +107,7 @@ def _broj_frejmova(
 
 
 def create_animation(
-    output: Union[str, Path] = "animacija.gif",
+    output: str | Path = "animacija.gif",
     fps: int = FPS,
     brzina: float = BRZINA,
     dpi: int = DPI,
@@ -118,15 +118,13 @@ def create_animation(
         return _create_animation(output, fps, brzina, dpi, ciscenja)
     finally:
         for ocisti in reversed(ciscenja):
-            try:
+            # Greška pri čišćenju ne sme prikriti prvobitni ishod renderovanja.
+            with suppress(Exception):
                 ocisti()
-            except Exception:
-                # Greška pri čišćenju ne sme prikriti prvobitni ishod renderovanja.
-                pass
 
 
 def _create_animation(
-    output: Union[str, Path],
+    output: str | Path,
     fps: int,
     brzina: float,
     dpi: int,
@@ -138,7 +136,9 @@ def _create_animation(
     if isinstance(fps, bool) or not isinstance(fps, (int, np.integer)) or fps <= 0:
         raise ValueError("fps mora biti pozitivan ceo broj")
     if fps > 100 or 100 % fps != 0:
-        raise ValueError("fps mora biti delilac broja 100 zbog GIF vremenske rezolucije")
+        raise ValueError(
+            "fps mora biti delilac broja 100 zbog GIF vremenske rezolucije"
+        )
     if not np.isfinite(brzina) or brzina <= 0:
         raise ValueError("brzina mora biti veća od nule")
 
@@ -190,9 +190,7 @@ def _create_animation(
     ax_sch.axis("off")
     ax_sch.set_title("Šema sistema", fontsize=13)
 
-    wall = plt.Rectangle(
-        (-0.6, -1.5), 0.6, 3.2, fc="lightgray", ec="k", hatch="///"
-    )
+    wall = plt.Rectangle((-0.6, -1.5), 0.6, 3.2, fc="lightgray", ec="k", hatch="///")
     ax_sch.add_patch(wall)
     ax_sch.plot([0, 0], [-1.5, 1.7], "k", lw=2)
 
@@ -428,11 +426,13 @@ def napravi_parser() -> argparse.ArgumentParser:
         default=BRZINA,
         help="brzina reprodukcije; 1 znači realno vreme",
     )
-    parser.add_argument("--dpi", type=_pozitivan_int, default=DPI, help="rezolucija izlaza")
+    parser.add_argument(
+        "--dpi", type=_pozitivan_int, default=DPI, help="rezolucija izlaza"
+    )
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> Path:
+def main(argv: Sequence[str] | None = None) -> Path:
     """Ulazna tačka komandne linije."""
     parser = napravi_parser()
     args = parser.parse_args(argv)
@@ -442,7 +442,9 @@ def main(argv: Optional[Sequence[str]] = None) -> Path:
 
     matplotlib.use("Agg")
     try:
-        return create_animation(args.output, fps=args.fps, brzina=args.brzina, dpi=args.dpi)
+        return create_animation(
+            args.output, fps=args.fps, brzina=args.brzina, dpi=args.dpi
+        )
     except ValueError as exc:
         parser.error(str(exc))
         raise AssertionError("argparse.error uvek prekida izvršavanje") from exc

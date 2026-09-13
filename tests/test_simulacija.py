@@ -42,13 +42,13 @@ class JednacinaTest(unittest.TestCase):
         )
 
     def test_desna_strana_postuje_bilans_sila(self) -> None:
-        izvod = simulacija.jednacina([0.001, 0.1], 0.25)
+        izvod = simulacija.jednacina(0.25, [0.001, 0.1])
         ocekivano_ubrzanje = (200.0 - 0.1 - 300.0) / 0.032
         np.testing.assert_allclose(izvod, [0.1, ocekivano_ubrzanje])
 
     def test_stanje_mora_imati_dve_komponente(self) -> None:
         with self.assertRaisesRegex(ValueError, "tačno pomeranje i brzinu"):
-            simulacija.jednacina([0.0], 0.0)
+            simulacija.jednacina(0.0, [0.0])
 
 
 class ResavanjeTest(unittest.TestCase):
@@ -121,14 +121,17 @@ class ResavanjeTest(unittest.TestCase):
                 simulacija.resi(vreme)
 
     def test_neuspeh_integratora_se_prijavljuje(self) -> None:
-        with mock.patch(
-            "simulacija.solve_ivp",
-            return_value=SimpleNamespace(
-                success=False,
-                message="test greška",
-                y=np.zeros((2, 2)),
+        with (
+            mock.patch(
+                "simulacija.solve_ivp",
+                return_value=SimpleNamespace(
+                    success=False,
+                    message="test greška",
+                    y=np.zeros((2, 2)),
+                ),
             ),
-        ), self.assertRaisesRegex(RuntimeError, "test greška"):
+            self.assertRaisesRegex(RuntimeError, "test greška"),
+        ):
             simulacija.resi([0.0, 0.1])
 
 
