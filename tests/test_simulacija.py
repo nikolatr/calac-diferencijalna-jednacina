@@ -2,6 +2,7 @@
 
 import unittest
 from dataclasses import replace
+from types import SimpleNamespace
 from unittest import mock
 
 import numpy as np
@@ -120,10 +121,13 @@ class ResavanjeTest(unittest.TestCase):
                 simulacija.resi(vreme)
 
     def test_neuspeh_integratora_se_prijavljuje(self) -> None:
-        lazni_rezultat = np.zeros((2, 2))
         with mock.patch(
-            "simulacija.odeint",
-            return_value=(lazni_rezultat, {"message": "test greška"}),
+            "simulacija.solve_ivp",
+            return_value=SimpleNamespace(
+                success=False,
+                message="test greška",
+                y=np.zeros((2, 2)),
+            ),
         ), self.assertRaisesRegex(RuntimeError, "test greška"):
             simulacija.resi([0.0, 0.1])
 

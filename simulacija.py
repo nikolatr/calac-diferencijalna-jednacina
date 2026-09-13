@@ -11,7 +11,7 @@ from typing import Optional, Sequence, Union
 
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
-from scipy.integrate import odeint
+from scipy.integrate import solve_ivp
 
 
 FloatArray = NDArray[np.float64]
@@ -143,6 +143,15 @@ def jednacina(
     return np.array([v, ubrzanje], dtype=float)
 
 
+def _jednacina_solve_ivp(
+    vreme: float,
+    stanje: Sequence[float],
+    parametri: ParametriSistema = PARAMETRI,
+) -> FloatArray:
+    """Adapter za ``solve_ivp``, koji očekuje argumente redom ``(t, y)``."""
+    return jednacina(stanje, vreme, parametri)
+
+
 def resi(
     vreme: Optional[ArrayLike] = None,
     pocetno_stanje: ArrayLike = y0,
@@ -176,18 +185,20 @@ def resi(
     if not np.all(np.isfinite(stanje_niz)):
         raise ValueError("pocetno_stanje mora sadržati samo konačne vrednosti")
 
-    rezultat, informacije = odeint(
-        jednacina,
-        stanje_niz,
-        vreme_niz,
+    resenje = solve_ivp(
+        _jednacina_solve_ivp,
+        t_span=(float(vreme_niz[0]), float(vreme_niz[-1])),
+        y0=stanje_niz,
+        t_eval=vreme_niz,
         args=(parametri,),
+        method="LSODA",
         rtol=1e-9,
         atol=(1e-12, 1e-10),
-        full_output=True,
     )
-    if informacije.get("message") != "Integration successful.":
-        poruka = informacije.get("message", "nepoznata greška")
-        raise RuntimeError(f"Numerička integracija nije uspela: {poruka}")
+    if not resenje.success:
+        raise RuntimeError(f"Numerička integracija nije uspela: {resenje.message}")
+
+    rezultat = resenje.y.T
     if not np.all(np.isfinite(rezultat)):
         raise RuntimeError("Numerička integracija je vratila nekonačne vrednosti")
 
